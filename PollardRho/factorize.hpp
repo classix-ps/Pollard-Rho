@@ -15,7 +15,8 @@
 
 struct Result {
 	mpz_class value;
-	size_t gcdEvaluations;
+	mpz_class gcdEvaluations;
+	mpz_class iterations;
 	std::chrono::microseconds elapsed;
 };
 
@@ -23,6 +24,7 @@ mpz_class f(mpz_class x, mpz_class c);
 
 Result pollardRhoFloyd(mpz_class n, mpz_class x0, mpz_class c);
 Result pollardRhoFloydImproved(mpz_class n, mpz_class x0, mpz_class c);
+Result pollardRhoBrent(mpz_class n, mpz_class x0, mpz_class c);
 
 void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, mpz_class b);
 

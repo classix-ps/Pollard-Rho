@@ -46,7 +46,7 @@ void testPollardFactor(int n) {
 		Result factor = pollardRhoFloyd(n, x0, c);
 		if (factor.value.fits_sint_p()) { // Should alwys be true, since n is an int and its factors must be smaller, but just to be sure
 			factors[factor.value.get_si()].first++;
-			factors[factor.value.get_si()].second += (factor.gcdEvaluations - factors[factor.value.get_si()].second) / factors[factor.value.get_si()].first;
+			factors[factor.value.get_si()].second += (factor.gcdEvaluations.get_si() - factors[factor.value.get_si()].second) / factors[factor.value.get_si()].first;
 		}
 	}
 
@@ -57,12 +57,14 @@ void testPollardFactor(int n) {
 }
 
 int findCollision(mpz_class n, mpz_class x0, mpz_class c) {
-	mpz_class x1 = (f(x0, c) % n + n) % n;
-	mpz_class x2 = (f(x1, c) % n + n) % n;
+	c += n * (c < 0); // make c positive mod N to avoid having to check if x1 or x2 are negative after modulo
+
+	mpz_class x1 = f(x0, c) % n;
+	mpz_class x2 = f(x1, c) % n;
 	int iterations = 1;
 	for (; x1 != x2; iterations++) {
-		x1 = (f(x1, c) % n + n) % n;
-		x2 = (f(f(x2, c) % n, c) % n + n) % n;
+		x1 = f(x1, c) % n;
+		x2 = f(f(x2, c) % n, c) % n;
 	}
 
 	return iterations;

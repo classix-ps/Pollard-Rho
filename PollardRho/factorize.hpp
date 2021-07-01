@@ -20,14 +20,14 @@ struct Result {
 	std::chrono::microseconds elapsed;
 };
 
-mpz_class f(mpz_class x, mpz_class c);
+mpz_class f(const mpz_class& x, const mpz_class& c);
 
-Result pollardRhoFloyd(mpz_class n, mpz_class x0, mpz_class c);
-Result pollardRhoFloydImproved(mpz_class n, mpz_class x0, mpz_class c);
-Result pollardRhoBrent(mpz_class n, mpz_class x0, mpz_class c);
+Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
+Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
+Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 
-void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, mpz_class b);
+void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b);
 
-void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, mpz_class b, mpz_class x0, mpz_class c);
+void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c);
 
 std::vector<mpz_class> findFactors(mpz_class n, mpz_class b, mpz_class x0, mpz_class c);

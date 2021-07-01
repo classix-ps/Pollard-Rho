@@ -1,13 +1,12 @@
 #include "factorize.hpp"
 
-mpz_class f(mpz_class x, mpz_class c) {
+mpz_class f(const mpz_class& x, const mpz_class& c) {
 	return x * x + c;
 }
 
-Result pollardRhoFloyd(mpz_class n, mpz_class x0, mpz_class c) {
+Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-	//c += n * (c < 0); // make c positive mod N to avoid having to check if x1 or x2 are negative after modulo
 	mpz_class x1 = x0;
 	mpz_class x2 = x0;
 	mpz_class diff;
@@ -26,10 +25,9 @@ Result pollardRhoFloyd(mpz_class n, mpz_class x0, mpz_class c) {
 	return { d, gcdEvaluations, iterations, elapsed };
 }
 
-Result pollardRhoFloydImproved(mpz_class n, mpz_class x0, mpz_class c) {
+Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-	//c += n * (c < 0); // make c positive mod N to avoid having to check if x1 or x2 are negative after modulo
 	mpz_class x1Save, x2Save;
 	mpz_class q;
 	mpz_sqrt(q.get_mpz_t(), n.get_mpz_t());
@@ -73,10 +71,9 @@ Result pollardRhoFloydImproved(mpz_class n, mpz_class x0, mpz_class c) {
 	return { d, gcdEvaluations, iterations, elapsed };
 }
 
-Result pollardRhoBrent(mpz_class n, mpz_class x0, mpz_class c) {
+Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-	//c += n * (c < 0); // make c positive mod N to avoid having to check if x1 or x2 are negative after modulo
 	mpz_class powerOfTwo = 1;
 	mpz_class xSave;
 
@@ -108,7 +105,7 @@ Result pollardRhoBrent(mpz_class n, mpz_class x0, mpz_class c) {
 	return { d, gcdEvaluations, iteration, elapsed };
 }
 
-void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, mpz_class b) {
+void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b) {
 	std::ifstream primorialFile("C:/Users/psusk/source/repos/C++/PollardRho/b034386.txt"); // https://oeis.org/A034386/b034386.txt
 	std::string line;
 	size_t i;
@@ -148,7 +145,7 @@ void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, mpz_class b
 	}
 }
 
-void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, mpz_class b, mpz_class x0, mpz_class c) {
+void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c) {
 	// Check if n is prime
 	int isPrime = mpz_probab_prime_p(n.get_mpz_t(), 10); // 2 denotes guaranteed prime, 1 denotes probably prime, 0 denotes guaranteed composite
 	if (isPrime == 2) {

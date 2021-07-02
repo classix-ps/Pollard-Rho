@@ -1,6 +1,6 @@
 #include "factorize.hpp"
 
-mpz_class f(const mpz_class& x, const mpz_class& c) {
+inline mpz_class f(const mpz_class& x, const mpz_class& c) {
 	return x * x + c;
 }
 
@@ -13,10 +13,11 @@ Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class&
 	mpz_class d = 1;
 	mpz_class gcdEvaluations = 0;
 	mpz_class iterations = 0;
-	for (; d == 1; mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t()), gcdEvaluations++, iterations += 3) {
+	for (; d == 1; gcdEvaluations++, iterations += 3) {
 		x1 = f(x1, c) % n;
 		x2 = f(f(x2, c), c) % n;
 		diff = x1 - x2;
+		mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t());
 	}
 
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -41,7 +42,7 @@ Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mp
 	mpz_class d = 1;
 	mpz_class gcdEvaluations = 0;
 	mpz_class iterations = 0;
-	for (; d == 1; mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t()), gcdEvaluations++) {
+	for (; d == 1; gcdEvaluations++) {
 		diff = 1;
 		for (size_t i = 0; i < q; i++, iterations += 3) {
 			x1 = f(x1, c) % n;
@@ -52,16 +53,18 @@ Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mp
 				x2Save = x2;
 			}
 		}
+		mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t());
 	}
 
 	if (d == n) {
 		x1 = x1Save;
 		x2 = x2Save;
 		d = 1;
-		for (; d == 1; mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t()), gcdEvaluations++, iterations += 3) {
+		for (; d == 1; gcdEvaluations++, iterations += 3) {
 			x1 = f(x1, c) % n;
 			x2 = f(f(x2, c), c) % n;
 			diff = x1 - x2;
+			mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t());
 		}
 	}
 

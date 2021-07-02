@@ -8,6 +8,8 @@ void findSameMod(int p, int q);
 
 void testPollardFactor(int n);
 
+void testPollardRhoRuntime(int maxC, int maxN);
+
 int findCollision(mpz_class n, mpz_class x0, mpz_class c);
 
 void testAverageP(int minX0, int maxX0, int minP, int maxP);

@@ -20,7 +20,7 @@ struct Result {
 	std::chrono::microseconds elapsed;
 };
 
-mpz_class f(const mpz_class& x, const mpz_class& c);
+inline mpz_class f(const mpz_class& x, const mpz_class& c);
 
 Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c);

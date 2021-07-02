@@ -91,9 +91,15 @@ int main() {
 
 	//testMod();
 
-	Result factor;
+	testPollardRhoRuntime(10000, 10000000);
+
+	//Result factor;
+	//runPollardRho(59, 73, 2, 1);
+	//runPollardRho(59, 73, 2, -1);
+	//runPollardRho(mpz_class("5915587277"), mpz_class("3267000013"), 3, 0);
+	//runPollardRho(mpz_class("5915587277"), mpz_class("3267000013"), 2, 1);
 	//runPollardRho(mpz_class("5915587277"), mpz_class("3267000013"), 2, -10);
-	runPollardRho(mpz_class("47519791211"), mpz_class("57911131517"), 2, 2);
+	//runPollardRho(mpz_class("47519791211"), mpz_class("57911131517"), 2, 2);
 
 	//testPollardFactor(59 * 73);
 	//testPollardFactor(3 * 59 * 73);

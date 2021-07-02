@@ -93,8 +93,15 @@ int main() {
 
 	//testPollardRhoRuntime(10000, 10000000);
 
-	Result factor = pollardRhoOne(299, 5);
+	Result factor;
+	factor = pollardRhoOne(299, 5);
 	std::cout << factor.value.get_str() << ", gcd evaluations: " << factor.gcdEvaluations.get_str() << ", iterations: " << factor.iterations.get_str() << ", elapsed: " << factor.elapsed.count() << std::endl;
+	factor = pollardRhoOne(mpz_class("335283916003206474733644480356983247998164827732269"), 15000);
+	std::cout << factor.value.get_str() << ", gcd evaluations: " << factor.gcdEvaluations.get_str() << ", iterations: " << factor.iterations.get_str() << ", elapsed: " << factor.elapsed.count() << std::endl;
+	std::vector<mpz_class> factors = findFactors(factor.value - 1, 100, 2, 1);
+	for (const mpz_class& f : factors) {
+		std::cout << "\t" << f.get_str() << std::endl;
+	}
 
 	//runPollardRho(59, 73, 2, 1);
 	//runPollardRho(59, 73, 2, -1);

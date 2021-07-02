@@ -57,11 +57,11 @@ void testPollardFactor(int n) {
 }
 
 void testPollardRhoRuntime(int maxC, int maxN) {
-	std::map<unsigned long, double> averageGCDEvaluations;
-	std::map<unsigned long, double> averageIterations;
-	std::map<unsigned long, double> fourthRoot;
+	std::vector<std::pair<unsigned long, double>> averageGCDEvaluations;
+	std::vector<std::pair<unsigned long, double>> averageIterations;
+	std::vector<std::pair<unsigned long, double>> fourthRoot;
 
-	std::ifstream file("../b001097.txt");
+	std::ifstream file("../b001097 (twin primes).txt");
 	std::string line1, line2;
 	
 	while (std::getline(file, line1)) {
@@ -80,16 +80,16 @@ void testPollardRhoRuntime(int maxC, int maxN) {
 				gcdEvaluations.push_back(res.gcdEvaluations.get_ui());
 				iterations.push_back(res.iterations.get_ui());
 			}
-			averageGCDEvaluations[n.get_ui()] = std::accumulate(gcdEvaluations.begin(), gcdEvaluations.end(), 0.0) / gcdEvaluations.size();
-			averageIterations[n.get_ui()] = std::accumulate(iterations.begin(), iterations.end(), 0.0) / iterations.size();
-			fourthRoot[n.get_ui()] = sqrt(sqrt(n.get_ui()));
+			averageGCDEvaluations.push_back(std::make_pair(n.get_ui(), std::accumulate(gcdEvaluations.begin(), gcdEvaluations.end(), 0.0) / gcdEvaluations.size()));
+			averageIterations.push_back(std::make_pair(n.get_ui(), std::accumulate(iterations.begin(), iterations.end(), 0.0) / iterations.size()));
+			fourthRoot.push_back(std::make_pair(n.get_ui(), sqrt(sqrt(n.get_ui()))));
 		}
 	}
 
 	Gnuplot gp("gnuplot -persist");
-	double maxG = std::max_element(averageGCDEvaluations.begin(), averageGCDEvaluations.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second;
-	double maxI = std::max_element(averageIterations.begin(), averageIterations.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second;
-	double max4 = std::max_element(fourthRoot.begin(), fourthRoot.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second;
+	double maxG = std::max_element(averageGCDEvaluations.begin(), averageGCDEvaluations.end(), [](const std::pair<unsigned long, double>& p1, const std::pair<unsigned long, double>& p2) { return p1.second < p2.second; })->second;
+	double maxI = std::max_element(averageIterations.begin(), averageIterations.end(), [](const std::pair<unsigned long, double>& p1, const std::pair<unsigned long, double>& p2) { return p1.second < p2.second; })->second;
+	double max4 = std::max_element(fourthRoot.begin(), fourthRoot.end(), [](const std::pair<unsigned long, double>& p1, const std::pair<unsigned long, double>& p2) { return p1.second < p2.second; })->second;
 	std::vector<double> maxVals = { maxG, maxI, max4 };
 
 	gp << "set xrange [1:" << maxN << "]\n";
@@ -111,7 +111,7 @@ int findCollision(mpz_class n, mpz_class x0, mpz_class c) {
 	int iterations = 1;
 	for (; x1 != x2; iterations++) {
 		x1 = f(x1, c) % n;
-		x2 = f(f(x2, c) % n, c) % n;
+		x2 = f(f(x2, c), c) % n;
 	}
 
 	return iterations;
@@ -216,8 +216,8 @@ void visualizeIterationsP(int x0, int c) {
 
 	Gnuplot gp("gnuplot -persist");
 	gp << "set xrange [1:" << maxP << "]\n";
-	gp << "set yrange [" << std::min_element(iterations.begin(), iterations.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second << ":" <<
-		std::max_element(iterations.begin(), iterations.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second << "]\n";
+	gp << "set yrange [" << std::min_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << ":" <<
+		std::max_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << "]\n";
 	gp << "plot" << gp.file1d(iterations) << "with lines title 'iterations across p, c = " + std::to_string(c) + ", x0 = " + std::to_string(x0) +
 		", avg. = " + std::to_string(std::accumulate(iterations.begin(), iterations.end(), 0.0, [](double value, const std::pair<int, int>& p) { return value + p.second / sqrt(p.first); }) / iterations.size()) + "',"; // avg. relative difference between iterations and sqrt(p)
 	gp << gp.file1d(sqrtFunc) << "with lines title 'sqrt'" << std::endl;
@@ -232,7 +232,7 @@ void visualizeIterationsC(int x0, int p) {
 
 	Gnuplot gp("gnuplot -persist");
 	gp << "set xrange [1:" << p - 1 << "]\n";
-	gp << "set yrange [" << std::min_element(iterations.begin(), iterations.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second << ":" <<
-		std::max_element(iterations.begin(), iterations.end(), [](const std::pair<int, double>& p1, const std::pair<int, double>& p2) { return p1.second < p2.second; })->second << "]\n";
+	gp << "set yrange [" << std::min_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << ":" <<
+		std::max_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << "]\n";
 	gp << "plot" << gp.file1d(iterations) << "with lines title 'iterations across c, p = " + std::to_string(p) + ", x0 = " + std::to_string(x0) + "'" << std::endl;
 }

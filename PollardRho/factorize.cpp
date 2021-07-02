@@ -122,12 +122,9 @@ Result pollardRhoOne(const mpz_class& n, const mpz_class& s) {
 	mpz_class r = g;
 	mpz_class iteration = 0;
 	for (mpz_class i = 2; i <= s; mpz_nextprime(i.get_mpz_t(), i.get_mpz_t()), iteration++) {
-		mpfr::mpreal iReal(i.get_str());
-		mpfr::mpreal sReal(s.get_str());
-		mpfr::mpreal alphaReal = floor(log(sReal) / log(iReal));
-		mpz_class alpha(alphaReal.toString());
+		mpfr::mpreal alpha = floor(log(mpfr::mpreal(s.get_str())) / log(mpfr::mpreal(i.get_str())));
 		mpz_class q;
-		mpz_pow_ui(q.get_mpz_t(), i.get_mpz_t(), alpha.get_ui());
+		mpz_pow_ui(q.get_mpz_t(), i.get_mpz_t(), alpha.toULong());
 
 		mpz_powm(r.get_mpz_t(), r.get_mpz_t(), q.get_mpz_t(), n.get_mpz_t());
 	}
@@ -143,22 +140,9 @@ Result pollardRhoOne(const mpz_class& n, const mpz_class& s) {
 }
 
 void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b) {
-	std::ifstream primorialFile("C:/Users/psusk/source/repos/C++/PollardRho/b034386.txt"); // https://oeis.org/A034386/b034386.txt
-	std::string line;
-	size_t i;
-	for (i = 0; i < b && std::getline(primorialFile, line); i++);
-	if (i != b) {
-		std::cout << "Bound to search for small prime numbers is too large.";
-		return;
-	}
+	mpz_class p = primorial(b); // Alternatively, can access OEIS bFile containing primorials up to 2000
 
-	std::getline(primorialFile, line);
-	std::string primorial = line.substr(line.find(' ') + 1);
-
-	mpz_class p, g;
-
-	p.set_str(primorial, 10);
-
+	mpz_class g;
 	for (mpz_gcd(g.get_mpz_t(), p.get_mpz_t(), n.get_mpz_t()); g > 1; mpz_gcd(g.get_mpz_t(), p.get_mpz_t(), n.get_mpz_t())) {
 		std::vector<int> basicDivisors = { 2, 3, 5 };
 		std::vector<int> divisors = { 1, 7, 11, 13, 17, 19, 23, 29 };
@@ -190,9 +174,9 @@ void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_cl
 		return;
 	}
 	else {
-		// Check if n is a perfect power
-		mpfr::mpreal max_k = floor(log(mpfr::mpreal(n.get_str())) / log(mpfr::mpreal(b.get_str()))).toULLong();
-		for (size_t k = max_k.toULLong(); k >= 2; k--) {
+		// Check if n is a perfect power (alternatively, mpz_perfect_power_p(), but we want to use the fact that there are no factors below b left in N to our advantage)
+		mpfr::mpreal max_k = floor(log(mpfr::mpreal(n.get_str())) / log(mpfr::mpreal(b.get_str())));
+		for (unsigned long k = max_k.toULong(); k >= 2; k--) {
 			mpz_class result;
 			mpz_class remainder;
 			mpz_rootrem(result.get_mpz_t(), remainder.get_mpz_t(), n.get_mpz_t(), k);
@@ -204,21 +188,22 @@ void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_cl
 		}
 
 		// Apply Pollard rho
-		mpz_class factor;
+		Result factor;
+		mpz_class x(x0);
 		if (isPrime == 1) {
 			size_t run = 0;
 			size_t runs = 10;
-			//for (factor = pollardRhoFloyd(n, x0, c); run < runs && factor == n; x0 = (x0 + 1) % n, factor = pollardRhoFloyd(n, x0, c), run++);
-			if (factor == n) {
-				factors.push_back(factor);
+			for (factor = pollardRhoFloyd(n, x, c); run < runs && factor.value == n; x = (x + 1) % n, factor = pollardRhoFloyd(n, x, c), run++);
+			if (factor.value == n) {
+				factors.push_back(factor.value);
 				return;
 			}
 		}
 		else {
-			//for (factor = pollardRhoFloyd(n, x0, c); factor == n; x0 = (x0 + 1) % n, factor = pollardRhoFloyd(n, x0, c));
+			for (factor = pollardRhoFloyd(n, x, c); factor.value == n; x = (x + 1) % n, factor = pollardRhoFloyd(n, x, c));
 		}
-		findLargeFactors(factors, factor, b, x0, c);
-		findLargeFactors(factors, n / factor, b, x0, c);
+		findLargeFactors(factors, factor.value, b, x0, c);
+		findLargeFactors(factors, n / factor.value, b, x0, c);
 	}
 }
 

@@ -26,6 +26,8 @@ Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class&
 Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 
+Result pollardRhoOne(const mpz_class& n, const mpz_class& s);
+
 void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b);
 
 void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c);

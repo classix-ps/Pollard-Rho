@@ -12,8 +12,8 @@ Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class&
 	mpz_class diff;
 	mpz_class d = 1;
 	mpz_class gcdEvaluations = 0;
-	mpz_class iterations = 0;
-	for (; d == 1; gcdEvaluations++, iterations += 3) {
+	mpz_class iteration = 0;
+	for (; d == 1; gcdEvaluations++, iteration += 3) {
 		x1 = f(x1, c) % n;
 		x2 = f(f(x2, c), c) % n;
 		diff = x1 - x2;
@@ -23,7 +23,7 @@ Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class&
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
 
-	return { d, gcdEvaluations, iterations, elapsed };
+	return { d, gcdEvaluations, iteration, elapsed };
 }
 
 Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
@@ -41,10 +41,10 @@ Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mp
 	mpz_class diff;
 	mpz_class d = 1;
 	mpz_class gcdEvaluations = 0;
-	mpz_class iterations = 0;
+	mpz_class iteration = 0;
 	for (; d == 1; gcdEvaluations++) {
 		diff = 1;
-		for (size_t i = 0; i < q; i++, iterations += 3) {
+		for (size_t i = 0; i < q; i++, iteration += 3) {
 			x1 = f(x1, c) % n;
 			x2 = f(f(x2, c), c) % n;
 			diff *= (x1 - x2);
@@ -60,7 +60,7 @@ Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mp
 		x1 = x1Save;
 		x2 = x2Save;
 		d = 1;
-		for (; d == 1; gcdEvaluations++, iterations += 3) {
+		for (; d == 1; gcdEvaluations++, iteration += 3) {
 			x1 = f(x1, c) % n;
 			x2 = f(f(x2, c), c) % n;
 			diff = x1 - x2;
@@ -71,7 +71,7 @@ Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mp
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
 
-	return { d, gcdEvaluations, iterations, elapsed };
+	return { d, gcdEvaluations, iteration, elapsed };
 }
 
 Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
@@ -106,6 +106,40 @@ Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class&
 	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
 
 	return { d, gcdEvaluations, iteration, elapsed };
+}
+
+Result pollardRhoOne(const mpz_class& n, const mpz_class& s) {
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+	mpz_class g;
+	if (mpz_odd_p(n.get_mpz_t())) {
+		g = 2;
+	}
+	else {
+		for (g = 3; n % g != 0; g += 2);
+	}
+
+	mpz_class r = g;
+	mpz_class iteration = 0;
+	for (mpz_class i = 2; i <= s; mpz_nextprime(i.get_mpz_t(), i.get_mpz_t()), iteration++) {
+		mpfr::mpreal iReal(i.get_str());
+		mpfr::mpreal sReal(s.get_str());
+		mpfr::mpreal alphaReal = floor(log(sReal) / log(iReal));
+		mpz_class alpha(alphaReal.toString());
+		mpz_class q;
+		mpz_pow_ui(q.get_mpz_t(), i.get_mpz_t(), alpha.get_ui());
+
+		mpz_powm(r.get_mpz_t(), r.get_mpz_t(), q.get_mpz_t(), n.get_mpz_t());
+	}
+
+	r -= 1;
+	mpz_class d;
+	mpz_gcd(d.get_mpz_t(), r.get_mpz_t(), n.get_mpz_t());
+
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
+
+	return { d, 1, iteration, elapsed };
 }
 
 void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b) {

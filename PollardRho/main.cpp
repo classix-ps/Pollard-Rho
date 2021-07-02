@@ -91,9 +91,11 @@ int main() {
 
 	//testMod();
 
-	testPollardRhoRuntime(10000, 10000000);
+	//testPollardRhoRuntime(10000, 10000000);
 
-	//Result factor;
+	Result factor = pollardRhoOne(299, 5);
+	std::cout << factor.value.get_str() << ", gcd evaluations: " << factor.gcdEvaluations.get_str() << ", iterations: " << factor.iterations.get_str() << ", elapsed: " << factor.elapsed.count() << std::endl;
+
 	//runPollardRho(59, 73, 2, 1);
 	//runPollardRho(59, 73, 2, -1);
 	//runPollardRho(mpz_class("5915587277"), mpz_class("3267000013"), 3, 0);

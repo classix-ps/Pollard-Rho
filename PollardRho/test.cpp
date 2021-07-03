@@ -103,6 +103,104 @@ void testPollardRhoRuntime(int maxC, int maxN) {
 	file.close();
 }
 
+std::pair<size_t, std::pair<std::pair<int, int>, std::pair<int, int>>> testPollardRhoConsecutiveFailuresX(int maxP, int maxX0) {
+	std::vector<std::vector<int>> iterationsMatrix;
+
+	mpz_class c = 1;
+
+	size_t pOffset = 9;
+	for (mpz_class p = 23; p <= maxP; mpz_nextprime(p.get_mpz_t(), p.get_mpz_t())) {
+		std::vector<int> iterations;
+
+		for (int x0 = 0; x0 <= maxX0; x0++) {
+			iterations.push_back(findCollision(p, x0, c));
+		}
+
+		iterationsMatrix.push_back(iterations);
+	}
+
+	size_t streak = 0;
+	std::pair<int, int> minmaxX0;
+	std::pair<int, int> ps;
+	for (size_t p1 = 0; p1 < iterationsMatrix.size() - 1; p1++) {
+		std::vector<int> iterationsVec = iterationsMatrix[p1];
+
+		for (size_t p2 = p1 + 1; p2 < iterationsMatrix.size(); p2++) {
+			std::vector<int> iterationsVecCompare = iterationsMatrix[p2];
+
+			size_t currentStreak = 0;
+			int minX0;
+			for (size_t i = 0; i < iterationsVec.size(); i++) {
+				if (iterationsVec[i] == iterationsVecCompare[i]) {
+					if (currentStreak == 0) {
+						minX0 = i;
+					}
+					currentStreak++;
+				}
+				else {
+					if (currentStreak > streak) {
+						streak = currentStreak;
+						minmaxX0 = std::make_pair(minX0, i);
+						ps = std::make_pair(p1 + pOffset, p2 + pOffset);
+					}
+					currentStreak = 0;
+				}
+			}
+		}
+	}
+
+	return std::make_pair(streak, std::make_pair(minmaxX0, ps));
+}
+
+std::pair<size_t, std::pair<std::pair<int, int>, std::pair<int, int>>> testPollardRhoConsecutiveFailuresC(int maxP, int maxC) {
+	std::vector<std::vector<int>> iterationsMatrix;
+
+	mpz_class x0 = 2;
+
+	size_t pOffset = 9;
+	for (mpz_class p = 23; p <= maxP; mpz_nextprime(p.get_mpz_t(), p.get_mpz_t())) {
+		std::vector<int> iterations;
+
+		for (int c = 1; c <= maxC; c++) {
+			iterations.push_back(findCollision(p, x0, c));
+		}
+
+		iterationsMatrix.push_back(iterations);
+	}
+
+	size_t streak = 0;
+	std::pair<int, int> minmaxC;
+	std::pair<int, int> ps;
+	for (size_t p1 = 0; p1 < iterationsMatrix.size() - 1; p1++) {
+		std::vector<int> iterationsVec = iterationsMatrix[p1];
+
+		for (size_t p2 = p1 + 1; p2 < iterationsMatrix.size(); p2++) {
+			std::vector<int> iterationsVecCompare = iterationsMatrix[p2];
+
+			size_t currentStreak = 0;
+			int minC;
+			for (size_t i = 0; i < iterationsVec.size(); i++) {
+				if (iterationsVec[i] == iterationsVecCompare[i]) {
+					if (currentStreak == 0) {
+						minC = i;
+					}
+					currentStreak++;
+				}
+				else {
+					if (currentStreak > streak) {
+						streak = currentStreak;
+						minmaxC = std::make_pair(minC + 1, i + 1);
+						ps = std::make_pair(p1 + pOffset, p2 + pOffset);
+					}
+					currentStreak = 0;
+				}
+			}
+		}
+	}
+
+	return std::make_pair(streak, std::make_pair(minmaxC, ps));
+}
+
 int findCollision(mpz_class n, mpz_class x0, mpz_class c) {
 	c += n * (c < 0); // make c positive mod N to avoid having to check if x1 or x2 are negative after modulo
 

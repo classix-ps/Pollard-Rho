@@ -1,5 +1,7 @@
 #include "test.hpp"
 
+using namespace Factorize::keywords;
+
 void displayBasics() {
 	Result factor;
 
@@ -62,7 +64,7 @@ int main() {
 	//std::vector<mpz_class> factors = findFactors(10403, 102, 30, 1);
 	//std::vector<mpz_class> factors = findFactors(49, 5, 30, 1);
 	//std::vector<mpz_class> factors = findFactors(4307, 5, 2, 1);
-	std::vector<mpz_class> factors = findFactors(mpz_class("5915587277") * mpz_class("3267000013"), 5, 2, 1);
+	std::vector<mpz_class> factors = Factorize::findFactors(mpz_class("5915587277") * mpz_class("3267000013"));
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
 	std::cout << "Elapsed time: " << elapsed.count() << " [microseconds]" << std::endl;
@@ -93,15 +95,39 @@ int main() {
 
 	//testPollardRhoRuntime(10000, 10000000);
 
+	/*
+	std::pair<size_t, std::pair<std::pair<int, int>, std::pair<int, int>>> consecutiveFailuresX = testPollardRhoConsecutiveFailuresX(100000, 50);
+	std::cout << "Streak: " << consecutiveFailuresX.first << ", starting x0: " << consecutiveFailuresX.second.first.first << ", ending x0: " << consecutiveFailuresX.second.first.second
+		<< ", p1: " << consecutiveFailuresX.second.second.first << ", p2: " << consecutiveFailuresX.second.second.second << std::endl;
+	for (int x0 = consecutiveFailuresX.second.first.first; x0 <= consecutiveFailuresX.second.first.second; x0++) {
+		std::cout << "\t" << pollardRhoFloyd(25321 * 28499, x0, 1).value.get_str() << std::endl;
+	}
+
+	std::pair<size_t, std::pair<std::pair<int, int>, std::pair<int, int>>> consecutiveFailuresC = testPollardRhoConsecutiveFailuresC(100000, 50);
+	std::cout << "Streak: " << consecutiveFailuresC.first << ", starting c: " << consecutiveFailuresC.second.first.first << ", ending c: " << consecutiveFailuresC.second.first.second
+		<< ", p1: " << consecutiveFailuresC.second.second.first << ", p2: " << consecutiveFailuresC.second.second.second << std::endl;
+	for (int c = consecutiveFailuresC.second.first.first; c <= consecutiveFailuresC.second.first.second; c++) {
+		std::cout << "\t" << pollardRhoFloyd(29 * 43, 2, c).value.get_str() << std::endl;
+	}
+	*/
+
+	std::vector<mpz_class> factors = Factorize::findFactors(29 * 43, _b = 1, _s = 1, _x0 = 2, _c = 8);
+	for (const mpz_class& factor : factors) {
+		std::string fStr = factor.get_str();
+		std::cout << "\t" << factor.get_str() << std::endl;
+	}
+
+	/*
 	Result factor;
-	factor = pollardRhoOne(299, 5);
+	//factor = pollardRhoOne(mpz_class("335283916003206474733644480356983247998164827732269"), 15000);
+	factor = pollardRhoOne(59 * 73* 7 * 13, 10);
 	std::cout << factor.value.get_str() << ", gcd evaluations: " << factor.gcdEvaluations.get_str() << ", iterations: " << factor.iterations.get_str() << ", elapsed: " << factor.elapsed.count() << std::endl;
-	factor = pollardRhoOne(mpz_class("335283916003206474733644480356983247998164827732269"), 15000);
-	std::cout << factor.value.get_str() << ", gcd evaluations: " << factor.gcdEvaluations.get_str() << ", iterations: " << factor.iterations.get_str() << ", elapsed: " << factor.elapsed.count() << std::endl;
-	std::vector<mpz_class> factors = findFactors(factor.value - 1, 100, 2, 1);
+	//std::vector<mpz_class> factors = findFactors(factor.value);
+	std::vector<mpz_class> factors = findFactors(factor.value - 1);
 	for (const mpz_class& f : factors) {
 		std::cout << "\t" << f.get_str() << std::endl;
 	}
+	*/
 
 	//runPollardRho(59, 73, 2, 1);
 	//runPollardRho(59, 73, 2, -1);

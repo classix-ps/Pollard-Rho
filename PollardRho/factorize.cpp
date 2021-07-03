@@ -1,9 +1,5 @@
 #include "factorize.hpp"
 
-inline mpz_class f(const mpz_class& x, const mpz_class& c) {
-	return x * x + c;
-}
-
 Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -139,17 +135,19 @@ Result pollardRhoOne(const mpz_class& n, const mpz_class& s) {
 	return { d, 1, iteration, elapsed };
 }
 
-void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b) {
+void Factorize::_removeSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b) {
 	mpz_class p = primorial(b); // Alternatively, can access OEIS bFile containing primorials up to 2000
-
 	mpz_class g;
+
+	std::vector<int> basicDivisors = { 2, 3, 5 };
+	std::vector<int> divisors = { 1, 7, 11, 13, 17, 19, 23, 29 };
 	for (mpz_gcd(g.get_mpz_t(), p.get_mpz_t(), n.get_mpz_t()); g > 1; mpz_gcd(g.get_mpz_t(), p.get_mpz_t(), n.get_mpz_t())) {
-		std::vector<int> basicDivisors = { 2, 3, 5 };
-		std::vector<int> divisors = { 1, 7, 11, 13, 17, 19, 23, 29 };
+		n /= g;
 
 		for (const int& divisor : basicDivisors) {
 			if (g % divisor == 0) {
 				factors.push_back(divisor);
+				g /= divisor;
 			}
 		}
 
@@ -158,15 +156,14 @@ void findSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_c
 				expression = 30 * k + divisors[i];
 				if (g % expression == 0) {
 					factors.push_back(expression);
+					g /= expression;
 				}
 			}
 		}
-
-		n /= g;
 	}
 }
 
-void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c) {
+void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c) {
 	// Check if n is prime
 	int isPrime = mpz_probab_prime_p(n.get_mpz_t(), 10); // 2 denotes guaranteed prime, 1 denotes probably prime, 0 denotes guaranteed composite
 	if (isPrime == 2) {
@@ -175,46 +172,38 @@ void findLargeFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_cl
 	}
 	else {
 		// Check if n is a perfect power (alternatively, mpz_perfect_power_p(), but we want to use the fact that there are no factors below b left in N to our advantage)
-		mpfr::mpreal max_k = floor(log(mpfr::mpreal(n.get_str())) / log(mpfr::mpreal(b.get_str())));
-		for (unsigned long k = max_k.toULong(); k >= 2; k--) {
-			mpz_class result;
-			mpz_class remainder;
-			mpz_rootrem(result.get_mpz_t(), remainder.get_mpz_t(), n.get_mpz_t(), k);
+		mpfr::mpreal max_k = b > 1 ? floor(log(mpfr::mpreal(n.get_str())) / log(mpfr::mpreal(b.get_str()))) : floor(log(mpfr::mpreal(n.get_str())) / log(mpfr::mpreal(2)));
+		for (mpz_class k = 2; k <= max_k.toULong(); mpz_nextprime(k.get_mpz_t(), k.get_mpz_t())) {
+			mpz_class result, remainder;
+			mpz_rootrem(result.get_mpz_t(), remainder.get_mpz_t(), n.get_mpz_t(), k.get_ui());
 			if (remainder == 0) {
-				std::vector<mpz_class> perfectPowerFactors(k, result);
+				std::vector<mpz_class> perfectPowerFactors(k.get_ui(), result);
 				factors.insert(factors.end(), perfectPowerFactors.begin(), perfectPowerFactors.end());
 				return;
 			}
 		}
 
-		// Apply Pollard rho
+		// Apply factoring algorithm
 		Result factor;
-		mpz_class x(x0);
+		mpz_class cInc(c);
 		if (isPrime == 1) {
-			size_t run = 0;
-			size_t runs = 10;
-			for (factor = pollardRhoFloyd(n, x, c); run < runs && factor.value == n; x = (x + 1) % n, factor = pollardRhoFloyd(n, x, c), run++);
+			size_t runs = 5;
+			for (factor = pollardRhoFloyd(n, x0, cInc); runs && factor.value == n; factor = pollardRhoFloyd(n, x0, cInc), runs--) {
+				// 3 cases of c we want to avoid: 0, -2, and staying at x0. (last occurs when c = k * N - x0 * (x0 +- 1) where k is an integer)
+				for (cInc = (cInc + 1) % n; cInc % n == 0 || (cInc + 2) % n == 0 || (cInc + x0 * (x0 + 1)) % n == 0 || (cInc + x0 * (x0 - 1)) % n == 0; cInc = (cInc + 1) % n);
+			}
 			if (factor.value == n) {
 				factors.push_back(factor.value);
 				return;
 			}
 		}
 		else {
-			for (factor = pollardRhoFloyd(n, x, c); factor.value == n; x = (x + 1) % n, factor = pollardRhoFloyd(n, x, c));
+			for (factor = pollardRhoFloyd(n, x0, cInc); factor.value == n; factor = pollardRhoFloyd(n, x0, cInc)) {
+				// 3 cases of c we want to avoid: 0, -2, and staying at x0. (last occurs when c = k * N - x0 * (x0 +- 1) where k is an integer)
+				for (cInc = (cInc + 1) % n; cInc % n == 0 || (cInc + 2) % n == 0 || (cInc + x0 * (x0 + 1)) % n == 0 || (cInc + x0 * (x0 - 1)) % n == 0; cInc = (cInc + 1) % n);
+			}
 		}
-		findLargeFactors(factors, factor.value, b, x0, c);
-		findLargeFactors(factors, n / factor.value, b, x0, c);
+		Factorize::_getAllFactors(factors, factor.value, b, x0, c);
+		Factorize::_getAllFactors(factors, n / factor.value, b, x0, c);
 	}
-}
-
-std::vector<mpz_class> findFactors(mpz_class n, mpz_class b, mpz_class x0, mpz_class c) {
-	std::vector<mpz_class> factors;
-
-	// Find factors below bound b
-	findSmallFactors(factors, n, b);
-
-	// Find remaining large factors
-	findLargeFactors(factors, n, b, x0, c);
-
-	return factors;
 }

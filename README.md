@@ -1,5 +1,5 @@
 # Pollard-Rho and General Factorization of Primes
-This implements a complete prime factorization of any composite N using trial division, pollard p-1, and different versions pollard rho.
+This implements a complete prime factorization of any composite N using trial division, pollard p-1, and different versions of pollard rho.
 It uses the [GMP](https://gmplib.org/) library for efficient large scale calculations, in particular [gmpxx](https://gmplib.org/manual/C_002b_002b-Interface-General) for integers and [mpreal](https://github.com/advanpix/mpreal) for real number calculations.
 Additionally, premade tests are implemented, some of which use the [gnuplot-iostream](https://github.com/dstahlke/gnuplot-iostream) library for graphic output.
 

@@ -60,10 +60,10 @@ void testMod() {
 int main() {
 	/*
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-	//std::vector<mpz_class> factors = findFactors(509747, 30, 30, 1);
-	//std::vector<mpz_class> factors = findFactors(10403, 102, 30, 1);
-	//std::vector<mpz_class> factors = findFactors(49, 5, 30, 1);
-	//std::vector<mpz_class> factors = findFactors(4307, 5, 2, 1);
+	//std::vector<mpz_class> factors = Factorize::findFactors(509747, 30, 30, 1);
+	//std::vector<mpz_class> factors = Factorize::findFactors(10403, 102, 30, 1);
+	//std::vector<mpz_class> factors = Factorize::findFactors(49, 5, 30, 1);
+	//std::vector<mpz_class> factors = Factorize::findFactors(4307, 5, 2, 1);
 	std::vector<mpz_class> factors = Factorize::findFactors(mpz_class("5915587277") * mpz_class("3267000013"));
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
@@ -109,23 +109,28 @@ int main() {
 	for (int c = consecutiveFailuresC.second.first.first; c <= consecutiveFailuresC.second.first.second; c++) {
 		std::cout << "\t" << pollardRhoFloyd(29 * 43, 2, c).value.get_str() << std::endl;
 	}
-	*/
 
 	std::vector<mpz_class> factors = Factorize::findFactors(29 * 43, _b = 1, _s = 1, _x0 = 2, _c = 8);
 	for (const mpz_class& factor : factors) {
 		std::string fStr = factor.get_str();
 		std::cout << "\t" << factor.get_str() << std::endl;
 	}
+	*/
 
 	/*
 	Result factor;
-	//factor = pollardRhoOne(mpz_class("335283916003206474733644480356983247998164827732269"), 15000);
-	factor = pollardRhoOne(59 * 73* 7 * 13, 10);
+	factor = pollardPOne(mpz_class("335283916003206474733644480356983247998164827732269"), 14347);
+	//factor = pollardPOne(mpz_class("335283916003206474733644480356983247998164827732269"), 14346);
+	//factor = pollardPOne(59 * 73 * 7 * 13, 10);
 	std::cout << factor.value.get_str() << ", gcd evaluations: " << factor.gcdEvaluations.get_str() << ", iterations: " << factor.iterations.get_str() << ", elapsed: " << factor.elapsed.count() << std::endl;
-	//std::vector<mpz_class> factors = findFactors(factor.value);
-	std::vector<mpz_class> factors = findFactors(factor.value - 1);
+	std::vector<mpz_class> factors = Factorize::findFactors(factor.value);
+	//std::vector<mpz_class> factors = Factorize::findFactors(factor.value - 1);
 	for (const mpz_class& f : factors) {
-		std::cout << "\t" << f.get_str() << std::endl;
+		std::cout << f.get_str() << std::endl;
+		std::vector<mpz_class> smoothFactors = Factorize::findFactors(f - 1);
+		for (const mpz_class& smoothF : smoothFactors) {
+			std::cout << "\t" << smoothF.get_str() << std::endl;
+		}
 	}
 	*/
 

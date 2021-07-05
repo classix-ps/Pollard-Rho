@@ -32,12 +32,12 @@ Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class&
 Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 
-Result pollardRhoOne(const mpz_class& n, const mpz_class& s);
+Result pollardPOne(const mpz_class& n, const mpz_class& s);
 
 namespace Factorize {
 	void _removeSmallFactors(std::vector<mpz_class>& factors, mpz_class& n, const mpz_class& b);
 
-	void _getAllFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c);
+	void _getAllFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c, PollardRho pRho);
 
 	namespace keywords {
 		BOOST_PARAMETER_NAME(n)
@@ -51,10 +51,12 @@ namespace Factorize {
 	/** This function returns a vector of all prime factors n, or n itself if n is prime.
 	 * @param n (REQUIRED) The number to factor
 	 * @param b (OPTIONAL) The bound for small factors to search for
-	 * @param s (OPTIONAL) The bound for which to find factors - 1 which are s-powersmooth
+	 * @param s (OPTIONAL) The bound for which to find the product of all prime factors with an s-smooth predecessor
 	 * @param x0 (OPTIONAL) The initial value for Pollard Rho factoring
 	 * @param c (OPTIONAL) The constant for Pollard Rho factoring (Avoid 0, -2, and c = k * N - x0 * (x0 +- 1) where k is an integer)
 	 * @param pRho (OPTIONAL) The type of Pollard Rho algorithm to use when applying Pollard Rho
+	 * 
+	 * @result All prime factors of n
 	 */
 	BOOST_PARAMETER_FUNCTION(
 		(std::vector<mpz_class>),
@@ -76,22 +78,25 @@ namespace Factorize {
 	{
 		std::vector<mpz_class> factors;
 
+		if (n == 0 || n == 1)
+			return factors;
+
 		// Find factors below bound b
 		_removeSmallFactors(factors, n, b);
 
 		if (n == 1)
 			return factors;
 
-		// Find factor - 1 which is s-powersmooth
-		mpz_class factor = pollardRhoOne(n, s).value;
+		// Find product of all factors with an s-smooth predecessor
+		mpz_class factor = pollardPOne(n, s).value;
 
 		if (factor != n && factor != 1) {
-			_getAllFactors(factors, factor, b, x0, c);
+			_getAllFactors(factors, factor, b, x0, c, pRho);
 			n /= factor;
 		}
 
 		// Find all remaining factors
-		_getAllFactors(factors, n, b, x0, c);
+		_getAllFactors(factors, n, b, x0, c, pRho);
 
 		return factors;
 	}

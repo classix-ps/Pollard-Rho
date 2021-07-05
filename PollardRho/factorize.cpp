@@ -104,7 +104,7 @@ Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class&
 	return { d, gcdEvaluations, iteration, elapsed };
 }
 
-Result pollardRhoOne(const mpz_class& n, const mpz_class& s) {
+Result pollardPOne(const mpz_class& n, const mpz_class& s) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
 	mpz_class g;
@@ -163,7 +163,7 @@ void Factorize::_removeSmallFactors(std::vector<mpz_class>& factors, mpz_class& 
 	}
 }
 
-void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c) {
+void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, const mpz_class& b, const mpz_class& x0, const mpz_class& c, PollardRho pRho) {
 	// Check if n is prime
 	int isPrime = mpz_probab_prime_p(n.get_mpz_t(), 10); // 2 denotes guaranteed prime, 1 denotes probably prime, 0 denotes guaranteed composite
 	if (isPrime == 2) {
@@ -186,10 +186,13 @@ void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, con
 		// Apply factoring algorithm
 		Result factor;
 		mpz_class cInc(c);
+		// This is the most dangerous spot to be in: we aren't sure if N is prime, so we are forced to try Pollard Rho (multiple times unless we find a factor, since the algorithm can fail for some (consecutive) c)
+		// We thereby must run the algorithm arbitrarily many times and, upon failing every time, assume that N is prime. One must note that the runtime for failure for prime N is O(sqrt(N)) rather than O(sqrt(p)) (failure due to c is still O(sqrt(p))
 		if (isPrime == 1) {
 			size_t runs = 5;
 			for (factor = pollardRhoFloyd(n, x0, cInc); runs && factor.value == n; factor = pollardRhoFloyd(n, x0, cInc), runs--) {
-				// 3 cases of c we want to avoid: 0, -2, and staying at x0. (last occurs when c = k * N - x0 * (x0 +- 1) where k is an integer)
+				// 3 cases of c we want to avoid: 0 or -2 mod N, and staying at x0. (last occurs when c = - x0 * (x0 +- 1) mod N)
+				// We want to increment c because incrementing x0 is less likely to avoid consecutive failures
 				for (cInc = (cInc + 1) % n; cInc % n == 0 || (cInc + 2) % n == 0 || (cInc + x0 * (x0 + 1)) % n == 0 || (cInc + x0 * (x0 - 1)) % n == 0; cInc = (cInc + 1) % n);
 			}
 			if (factor.value == n) {
@@ -197,13 +200,15 @@ void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, con
 				return;
 			}
 		}
+		// Here we know N is composite, so we apply Pollard Rho until we find a factor
 		else {
 			for (factor = pollardRhoFloyd(n, x0, cInc); factor.value == n; factor = pollardRhoFloyd(n, x0, cInc)) {
-				// 3 cases of c we want to avoid: 0, -2, and staying at x0. (last occurs when c = k * N - x0 * (x0 +- 1) where k is an integer)
+				// 3 cases of c we want to avoid: 0 or -2 mod N, and staying at x0. (last occurs when c = - x0 * (x0 +- 1) mod N),
+				// We want to increment c because incrementing x0 is less likely to avoid consecutive failures
 				for (cInc = (cInc + 1) % n; cInc % n == 0 || (cInc + 2) % n == 0 || (cInc + x0 * (x0 + 1)) % n == 0 || (cInc + x0 * (x0 - 1)) % n == 0; cInc = (cInc + 1) % n);
 			}
 		}
-		Factorize::_getAllFactors(factors, factor.value, b, x0, c);
-		Factorize::_getAllFactors(factors, n / factor.value, b, x0, c);
+		Factorize::_getAllFactors(factors, factor.value, b, x0, c, pRho);
+		Factorize::_getAllFactors(factors, n / factor.value, b, x0, c, pRho);
 	}
 }

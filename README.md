@@ -7,4 +7,4 @@ A short rundown of the consecutive algorithms used when calling ```Factorize::fi
 1. Remove small prime factors using consecutive trial division
 2. Remove (and factor in 3.) cryptographically weak factors using Pollard (p-1)
 3. Recursively find all remaining prime factors using a given variant of Pollard Rho (Floyd's improved algorithm by default)
-   - Current Pollard Rho implementations: ```Floyd()```
+   - Current Pollard Rho implementations: ```Floyd(), FloydImproved(), Brent()```

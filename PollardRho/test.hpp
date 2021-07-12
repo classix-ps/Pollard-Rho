@@ -10,6 +10,8 @@ void testPollardFactor(int n);
 
 void testPollardRhoRuntime(int maxC, int maxN);
 
+void comparePollardRho(unsigned long maxN);
+
 std::pair<size_t, std::pair<std::pair<int, int>, std::pair<int, int>>> testPollardRhoConsecutiveFailuresX(int maxP, int maxX0);
 
 std::pair<size_t, std::pair<std::pair<int, int>, std::pair<int, int>>> testPollardRhoConsecutiveFailuresC(int maxP, int maxC);
@@ -23,3 +25,5 @@ void testAverageC(int minX0, int maxX0, int minP, int maxP);
 void visualizeIterationsP(int x0, int c);
 
 void visualizeIterationsC(int x0, int p);
+
+void visualizeIterationsX(int c, int p);

@@ -31,6 +31,7 @@ inline mpz_class f(const mpz_class& x, const mpz_class& c) { return x * x + c; }
 Result pollardRhoFloyd(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 Result pollardRhoFloydImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
+Result pollardRhoBrentImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c);
 
 Result pollardPOne(const mpz_class& n, const mpz_class& s);
 
@@ -51,7 +52,7 @@ namespace Factorize {
 	/** This function returns a vector of all prime factors n, or n itself if n is prime.
 	 * @param n (REQUIRED) The number to factor
 	 * @param b (OPTIONAL) The bound for small factors to search for
-	 * @param s (OPTIONAL) The bound for which to find the product of all prime factors with an s-smooth predecessor
+	 * @param s (OPTIONAL) The bound for which to find the product of all prime factors with an s-powersmooth predecessor
 	 * @param x0 (OPTIONAL) The initial value for Pollard Rho factoring
 	 * @param c (OPTIONAL) The constant for Pollard Rho factoring (Avoid 0, -2, and c = k * N - x0 * (x0 +- 1) where k is an integer)
 	 * @param pRho (OPTIONAL) The type of Pollard Rho algorithm to use when applying Pollard Rho
@@ -87,7 +88,7 @@ namespace Factorize {
 		if (n == 1)
 			return factors;
 
-		// Find product of all factors with an s-smooth predecessor
+		// Find product of all factors with an s-powersmooth predecessor
 		mpz_class factor = pollardPOne(n, s).value;
 
 		if (factor != n && factor != 1) {

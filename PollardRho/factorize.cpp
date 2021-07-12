@@ -104,6 +104,75 @@ Result pollardRhoBrent(const mpz_class& n, const mpz_class& x0, const mpz_class&
 	return { d, gcdEvaluations, iteration, elapsed };
 }
 
+Result pollardRhoBrentImproved(const mpz_class& n, const mpz_class& x0, const mpz_class& c) {
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+	std::pair<std::pair<mpz_class, mpz_class>, std::pair<mpz_class, mpz_class>> save;
+	mpz_class q;
+	mpz_sqrt(q.get_mpz_t(), n.get_mpz_t());
+	mpz_sqrt(q.get_mpz_t(), q.get_mpz_t());
+	mpz_sqrt(q.get_mpz_t(), q.get_mpz_t());
+	mpz_sqrt(q.get_mpz_t(), q.get_mpz_t());
+
+	mpz_class powerOfTwo = 1;
+	mpz_class xSave;
+
+	mpz_class x1 = f(x0, c) % n;
+	mpz_class x2 = f(x1, c) % n;
+	mpz_class diff = x1 - x2;
+	mpz_class d;
+	mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t());
+
+	mpz_class i = 0;
+
+	mpz_class gcdEvaluations = 1;
+	mpz_class iteration = 2;
+	for (mpz_class x = x2; d == 1; powerOfTwo *= 2) {
+		xSave = x;
+
+		for (; iteration < 3 * powerOfTwo; iteration++) {
+			x = f(x, c) % n;
+		}
+
+		diff = 1;
+		for (; d == 1 && iteration < powerOfTwo * 4; i++, iteration++) {
+			if (i == q) {
+				mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t());
+				gcdEvaluations++;
+
+				save = std::make_pair(std::make_pair(powerOfTwo, xSave), std::make_pair(iteration, x));
+				i = 0;
+			}
+
+			x = f(x, c) % n;
+			diff *= xSave - x;
+		}
+	}
+
+	mpz_class iterations = iteration;
+	if (d == n) {
+		powerOfTwo = save.first.first;
+		xSave = save.first.second;
+		iteration = save.second.first;
+		for (mpz_class x = save.second.second; d == 1; powerOfTwo *= 2) {
+			for (; iteration < 3 * powerOfTwo; iteration++, iterations++) {
+				x = f(x, c) % n;
+			}
+
+			for (; d == 1 && iteration < powerOfTwo * 4; iteration++, iterations++, gcdEvaluations++) {
+				x = f(x, c) % n;
+				diff = xSave - x;
+				mpz_gcd(d.get_mpz_t(), diff.get_mpz_t(), n.get_mpz_t());
+			}
+		}
+	}
+
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
+
+	return { d, gcdEvaluations, iteration, elapsed };
+}
+
 Result pollardPOne(const mpz_class& n, const mpz_class& s) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -186,11 +255,23 @@ void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, con
 		// Apply factoring algorithm
 		Result factor;
 		mpz_class cInc(c);
+		std::function<Result(const mpz_class&, const mpz_class&, const mpz_class&)> rhoFunction;
+		switch (pRho) {
+		case PollardRho::Floyd:
+			rhoFunction = pollardRhoFloyd;
+			break;
+		case PollardRho::FloydImproved:
+			rhoFunction = pollardRhoFloydImproved;
+			break;
+		case PollardRho::Brent:
+			rhoFunction = pollardRhoBrent;
+			break;
+		}
 		// This is the most dangerous spot to be in: we aren't sure if N is prime, so we are forced to try Pollard Rho (multiple times unless we find a factor, since the algorithm can fail for some (consecutive) c)
 		// We thereby must run the algorithm arbitrarily many times and, upon failing every time, assume that N is prime. One must note that the runtime for failure for prime N is O(sqrt(N)) rather than O(sqrt(p)) (failure due to c is still O(sqrt(p))
 		if (isPrime == 1) {
 			size_t runs = 5;
-			for (factor = pollardRhoFloyd(n, x0, cInc); runs && factor.value == n; factor = pollardRhoFloyd(n, x0, cInc), runs--) {
+			for (factor = rhoFunction(n, x0, cInc); runs && factor.value == n; factor = rhoFunction(n, x0, cInc), runs--) {
 				// 3 cases of c we want to avoid: 0 or -2 mod N, and staying at x0. (last occurs when c = - x0 * (x0 +- 1) mod N)
 				// We want to increment c because incrementing x0 is less likely to avoid consecutive failures
 				for (cInc = (cInc + 1) % n; cInc % n == 0 || (cInc + 2) % n == 0 || (cInc + x0 * (x0 + 1)) % n == 0 || (cInc + x0 * (x0 - 1)) % n == 0; cInc = (cInc + 1) % n);
@@ -202,7 +283,7 @@ void Factorize::_getAllFactors(std::vector<mpz_class>& factors, mpz_class n, con
 		}
 		// Here we know N is composite, so we apply Pollard Rho until we find a factor
 		else {
-			for (factor = pollardRhoFloyd(n, x0, cInc); factor.value == n; factor = pollardRhoFloyd(n, x0, cInc)) {
+			for (factor = rhoFunction(n, x0, cInc); factor.value == n; factor = rhoFunction(n, x0, cInc)) {
 				// 3 cases of c we want to avoid: 0 or -2 mod N, and staying at x0. (last occurs when c = - x0 * (x0 +- 1) mod N),
 				// We want to increment c because incrementing x0 is less likely to avoid consecutive failures
 				for (cInc = (cInc + 1) % n; cInc % n == 0 || (cInc + 2) % n == 0 || (cInc + x0 * (x0 + 1)) % n == 0 || (cInc + x0 * (x0 - 1)) % n == 0; cInc = (cInc + 1) % n);

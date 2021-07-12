@@ -97,8 +97,80 @@ void testPollardRhoRuntime(int maxC, int maxN) {
 	gp << "plot";
 	gp << gp.file1d(averageGCDEvaluations) << "with lines title 'gcdEvaluations',";
 	gp << gp.file1d(averageIterations) << "with lines title 'iterations',";
-	gp << gp.file1d(fourthRoot) << "with lines title 'linear'";
+	gp << gp.file1d(fourthRoot) << "with lines title 'fourth root'";
 	gp << std::endl;
+
+	file.close();
+}
+
+void comparePollardRho(unsigned long maxN) {
+	std::vector<std::pair<unsigned long, unsigned long>> gcdEvaluationsFloyd;
+	std::vector<std::pair<unsigned long, unsigned long>> gcdEvaluationsFloydImproved;
+	std::vector<std::pair<unsigned long, unsigned long>> gcdEvaluationsBrent;
+	std::vector<std::pair<unsigned long, unsigned long>> gcdEvaluationsBrentImproved;
+
+	std::vector<std::pair<unsigned long, unsigned long>> iterationsFloyd;
+	std::vector<std::pair<unsigned long, unsigned long>> iterationsFloydImproved;
+	std::vector<std::pair<unsigned long, unsigned long>> iterationsBrent;
+	std::vector<std::pair<unsigned long, unsigned long>> iterationsBrentImproved;
+
+	std::ifstream file("../b001097 (twin primes).txt");
+	std::string line1, line2;
+	while (std::getline(file, line1)) {
+		if (std::getline(file, line2)) {
+			mpz_class p1(line1.substr(line1.find(' ') + 1));
+			mpz_class p2(line2.substr(line2.find(' ') + 1));
+			mpz_class n = p1 * p2;
+			if (n > maxN) {
+				break;
+			}
+
+			Result resFloyd = pollardRhoFloyd(n, 2, 1);
+			gcdEvaluationsFloyd.push_back(std::make_pair(n.get_ui(), resFloyd.gcdEvaluations.get_ui()));
+			iterationsFloyd.push_back(std::make_pair(n.get_ui(), resFloyd.iterations.get_ui()));
+			Result resFloydImproved = pollardRhoFloydImproved(n, 2, 1);
+			gcdEvaluationsFloydImproved.push_back(std::make_pair(n.get_ui(), resFloydImproved.gcdEvaluations.get_ui()));
+			iterationsFloydImproved.push_back(std::make_pair(n.get_ui(), resFloydImproved.iterations.get_ui()));
+			Result resBrent = pollardRhoBrent(n, 2, 1);
+			gcdEvaluationsBrent.push_back(std::make_pair(n.get_ui(), resBrent.gcdEvaluations.get_ui()));
+			iterationsBrent.push_back(std::make_pair(n.get_ui(), resBrent.iterations.get_ui()));
+			Result resBrentImproved = pollardRhoBrent(n, 2, 1);
+			gcdEvaluationsBrentImproved.push_back(std::make_pair(n.get_ui(), resBrentImproved.gcdEvaluations.get_ui()));
+			iterationsBrentImproved.push_back(std::make_pair(n.get_ui(), resBrentImproved.iterations.get_ui()));
+		}
+	}
+
+	Gnuplot gp1("gnuplot -persist");
+	unsigned long maxGCDFloyd = std::max_element(gcdEvaluationsFloyd.begin(), gcdEvaluationsFloyd.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	unsigned long maxGCDFloydImproved = std::max_element(gcdEvaluationsFloydImproved.begin(), gcdEvaluationsFloydImproved.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	unsigned long maxGCDBrent = std::max_element(gcdEvaluationsBrent.begin(), gcdEvaluationsBrent.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	unsigned long maxGCDBrentImproved = std::max_element(gcdEvaluationsBrentImproved.begin(), gcdEvaluationsBrentImproved.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	std::vector<unsigned long> maxGCDVals = { maxGCDFloyd, maxGCDFloydImproved, maxGCDBrent, maxGCDBrentImproved };
+
+	gp1 << "set xrange [1:" << maxN << "]\n";
+	gp1 << "set yrange [0:" << *std::max_element(maxGCDVals.begin(), maxGCDVals.end()) << "]\n";
+	gp1 << "plot";
+	gp1 << gp1.file1d(gcdEvaluationsFloyd) << "with lines title 'FloydGCD',";
+	gp1 << gp1.file1d(gcdEvaluationsFloydImproved) << "with lines title 'FloydImprovedGCD',";
+	gp1 << gp1.file1d(gcdEvaluationsBrent) << "with lines title 'BrentGCD',";
+	gp1 << gp1.file1d(gcdEvaluationsBrentImproved) << "with lines title 'BrentImprovedGCD'";
+	gp1 << std::endl;
+
+	Gnuplot gp2("gnuplot -persist");
+	unsigned long maxItFloyd = std::max_element(iterationsFloyd.begin(), iterationsFloyd.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	unsigned long maxItFloydImproved = std::max_element(iterationsFloydImproved.begin(), iterationsFloydImproved.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	unsigned long maxItBrent = std::max_element(iterationsBrent.begin(), iterationsBrent.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	unsigned long maxItBrentImproved = std::max_element(iterationsBrentImproved.begin(), iterationsBrentImproved.end(), [](const std::pair<unsigned long, unsigned long>& p1, const std::pair<unsigned long, unsigned long>& p2) { return p1.second < p2.second; })->second;
+	std::vector<unsigned long> maxItVals = { maxItFloyd, maxItFloydImproved, maxItBrent, maxItBrentImproved };
+
+	gp2 << "set xrange [1:" << maxN << "]\n";
+	gp2 << "set yrange [0:" << *std::max_element(maxItVals.begin(), maxItVals.end()) << "]\n";
+	gp2 << "plot";
+	gp2 << gp2.file1d(iterationsFloyd) << "with lines title 'FloydIT',";
+	gp2 << gp2.file1d(iterationsFloydImproved) << "with lines title 'FloydImprovedIT',";
+	gp2 << gp2.file1d(iterationsBrent) << "with lines title 'BrentIT',";
+	gp2 << gp2.file1d(iterationsBrentImproved) << "with lines title 'BrentImprovedIT'";
+	gp2 << std::endl;
 
 	file.close();
 }
@@ -333,4 +405,18 @@ void visualizeIterationsC(int x0, int p) {
 	gp << "set yrange [" << std::min_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << ":" <<
 		std::max_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << "]\n";
 	gp << "plot" << gp.file1d(iterations) << "with lines title 'iterations across c, p = " + std::to_string(p) + ", x0 = " + std::to_string(x0) + "'" << std::endl;
+}
+
+void visualizeIterationsX(int c, int p) {
+	std::map<int, int> iterations;
+	for (int x0 = 0; x0 < p; x0++) {
+		int it = findCollision(p, x0, c);
+		iterations[x0] = it;
+	}
+
+	Gnuplot gp("gnuplot -persist");
+	gp << "set xrange [1:" << p - 1 << "]\n";
+	gp << "set yrange [" << std::min_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second << ":" <<
+		std::max_element(iterations.begin(), iterations.end(), [](const std::pair<int, int>& p1, const std::pair<int, int>& p2) { return p1.second < p2.second; })->second + 50 << "]\n";
+	gp << "plot" << gp.file1d(iterations) << "with lines title 'iterations across x0, p = " + std::to_string(p) + ", c = " + std::to_string(c) + "'" << std::endl;
 }
